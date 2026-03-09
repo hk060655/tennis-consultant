@@ -61,19 +61,19 @@ class ResponseGenerator:
             system += UNCERTAIN_ADDITION
 
         context_parts = []
-        for i, chunk in enumerate(retrieved_chunks, 1):
-            context_parts.append(
-                f"【知识片段 {i}】来源：{chunk.source_file} / {chunk.section_title}"
-                f"（适用水平：{chunk.skill_level}）\n{chunk.text}"
-            )
-        knowledge_context = "\n\n".join(context_parts)
+        for chunk in retrieved_chunks:
+            context_parts.append(chunk.text)
+        knowledge_context = "\n\n---\n\n".join(context_parts)
 
         level_info = f"学员当前NTRP水平：{user_level}" if user_level else "学员水平：未设置"
         context_injection = (
-            f"[教练参考信息 - 以下为知识库检索结果，请基于此作答]\n\n"
+            f"<background_knowledge>\n"
             f"{level_info}\n\n"
-            f"{knowledge_context}\n\n"
-            f"[参考信息结束，请用上述内容作为知识基础回答学员的问题]"
+            f"{knowledge_context}\n"
+            f"</background_knowledge>\n\n"
+            f"重要：请将以上background_knowledge作为你的专业知识背景来回答，"
+            f"不要在回答中引用、提及或暗示任何「知识片段」「来源」「文档」等字样，"
+            f"直接以教练身份自然地给出建议。"
         )
 
         messages = []
