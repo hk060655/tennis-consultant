@@ -1,4 +1,5 @@
 import logging
+import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -50,13 +51,16 @@ async def chat(request: ChatRequest):
     history = conversation_store[request.user_id]
     level_str = request.user_level.value if request.user_level else None
 
+    t0 = time.perf_counter()
     chunks, is_uncertain = retriever.retrieve(
         query=request.message,
         user_level=level_str,
         top_k=settings.top_k,
     )
+    t_rag = time.perf_counter() - t0
 
     try:
+        t1 = time.perf_counter()
         reply = generator.generate(
             user_message=request.message,
             retrieved_chunks=chunks,
@@ -64,9 +68,15 @@ async def chat(request: ChatRequest):
             conversation_history=history,
             is_uncertain=is_uncertain,
         )
+        t_llm = time.perf_counter() - t1
     except Exception as e:
         logger.error(f"LLM generation failed: {e}")
         raise HTTPException(status_code=502, detail="AI service unavailable")
+
+    t_total = time.perf_counter() - t0
+    logger.info(
+        f"[LATENCY] total={t_total:.2f}s  rag={t_rag:.2f}s  llm={t_llm:.2f}s"
+    )
 
     history.append({"role": "user", "content": request.message})
     history.append({"role": "assistant", "content": reply})
