@@ -4,10 +4,14 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from typing import Optional
+from backend.auth_utils import get_user_from_token
+from backend.rag.profiler import update_coach_notes
+from backend.db.supabase_client import get_supabase
 
 from backend.config import settings
 from backend.models.schemas import (
@@ -50,9 +54,42 @@ app.include_router(auth_router)
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    history = conversation_store[request.user_id]
+async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)):
+    # Resolve user identity
+    auth_user = get_user_from_token(authorization)
+    is_authenticated = auth_user is not None
+
+    if is_authenticated:
+        user_id, _ = auth_user
+    else:
+        user_id = request.user_id
+
     level_str = request.user_level.value if request.user_level else None
+
+    # For authenticated users: load profile + persistent history
+    coach_notes = ""
+    if is_authenticated:
+        sb = get_supabase()
+        if sb:
+            profile_res = sb.table("user_profiles").select("coach_notes, ntrp_level").eq("id", user_id).single().execute()
+            if profile_res.data:
+                coach_notes = profile_res.data.get("coach_notes") or ""
+                if not level_str:
+                    level_str = profile_res.data.get("ntrp_level")
+
+            hist_res = (
+                sb.table("conversation_history")
+                .select("role, content")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(20)
+                .execute()
+            )
+            history = list(reversed(hist_res.data)) if hist_res.data else []
+        else:
+            history = conversation_store[user_id]
+    else:
+        history = conversation_store[user_id]
 
     t0 = time.perf_counter()
     chunks, is_uncertain = retriever.retrieve(
@@ -70,6 +107,7 @@ async def chat(request: ChatRequest):
             user_level=level_str,
             conversation_history=history,
             is_uncertain=is_uncertain,
+            coach_notes=coach_notes,
         )
         t_llm = time.perf_counter() - t1
     except Exception as e:
@@ -77,18 +115,33 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=502, detail="AI service unavailable")
 
     t_total = time.perf_counter() - t0
-    logger.info(
-        f"[LATENCY] total={t_total:.2f}s  rag={t_rag:.2f}s  llm={t_llm:.2f}s"
-    )
+    logger.info(f"[LATENCY] total={t_total:.2f}s  rag={t_rag:.2f}s  llm={t_llm:.2f}s")
 
-    history.append({"role": "user", "content": request.message})
-    history.append({"role": "assistant", "content": reply})
-    conversation_store[request.user_id] = history[-40:]
+    new_messages = [
+        {"role": "user", "content": request.message},
+        {"role": "assistant", "content": reply},
+    ]
+
+    if is_authenticated:
+        sb = get_supabase()
+        if sb:
+            sb.table("conversation_history").insert([
+                {"user_id": user_id, "role": m["role"], "content": m["content"]}
+                for m in new_messages
+            ]).execute()
+            if request.user_level:
+                sb.table("user_profiles").update({"ntrp_level": level_str}).eq("id", user_id).execute()
+            import asyncio
+            all_history = history + new_messages
+            asyncio.create_task(update_coach_notes(user_id, all_history, coach_notes))
+    else:
+        history.extend(new_messages)
+        conversation_store[user_id] = history[-40:]
 
     return ChatResponse(
         reply=reply,
         sources=chunks,
-        user_id=request.user_id,
+        user_id=user_id,
         is_uncertain=is_uncertain,
     )
 

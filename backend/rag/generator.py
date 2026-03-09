@@ -53,6 +53,7 @@ class ResponseGenerator:
         user_level: Optional[str],
         conversation_history: list[dict],
         is_uncertain: bool,
+        coach_notes: str = "",
     ) -> str:
         from backend.config import settings
 
@@ -66,7 +67,18 @@ class ResponseGenerator:
         knowledge_context = "\n\n---\n\n".join(context_parts)
 
         level_info = f"学员当前NTRP水平：{user_level}" if user_level else "学员水平：未设置"
+
+        memory_section = ""
+        if coach_notes:
+            memory_section = (
+                f"<user_memory>\n"
+                f"以下是你对这位学员的了解，请在回答中自然地考虑这些信息：\n"
+                f"{coach_notes}\n"
+                f"</user_memory>\n\n"
+            )
+
         context_injection = (
+            f"{memory_section}"
             f"<background_knowledge>\n"
             f"{level_info}\n\n"
             f"{knowledge_context}\n"
