@@ -19,6 +19,14 @@ export default function TopicSidebar({ activeTopic, onTopicSelect, userLevel, on
         <button className="mobile-level-badge" onClick={onChangeLevel}>
           <span>{userLevel ? `NTRP ${userLevel}` : '设置水平'}</span>
         </button>
+        {/* Mobile-only auth button */}
+        {currentUser ? (
+          <button className="mobile-user-btn" onClick={onLogout} title={currentUser.email}>
+            <span>{currentUser.email[0].toUpperCase()}</span>
+          </button>
+        ) : (
+          <button className="mobile-login-btn" onClick={onLoginClick}>登录</button>
+        )}
       </div>
       <nav className="topic-nav">
         <div className="topic-nav-title">话题分类</div>

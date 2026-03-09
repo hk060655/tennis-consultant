@@ -1101,6 +1101,38 @@ body {
   .topic-icon { font-size: 14px; }
   .sidebar-footer { display: none; }
 
+  /* Mobile auth buttons in header */
+  .mobile-login-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    background: var(--clay);
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 12px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .mobile-user-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--clay);
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* ── Chat window fills remaining height automatically ── */
   .chat-window { height: 100%; }
   .bubble-wrapper { max-width: 88%; }
@@ -1117,6 +1149,10 @@ body {
     padding: 10px 14px;
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
+
+  /* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
+  .chat-input { font-size: 16px; }
+  .auth-input { font-size: 16px; }
 
   .new-chat-btn span { display: none; }
   .new-chat-btn { padding: 6px 8px; }
