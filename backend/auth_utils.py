@@ -1,7 +1,12 @@
+import asyncio
+import logging
 from typing import Optional, Tuple
 from backend.db.supabase_client import get_supabase
 
-def get_user_from_token(authorization: Optional[str]) -> Optional[Tuple[str, str]]:
+logger = logging.getLogger(__name__)
+
+
+async def get_user_from_token(authorization: Optional[str]) -> Optional[Tuple[str, str]]:
     if not authorization or not authorization.startswith("Bearer "):
         return None
     token = authorization.split(" ", 1)[1]
@@ -9,7 +14,8 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[Tuple[str, str
     if sb is None:
         return None
     try:
-        res = sb.auth.get_user(token)
+        res = await asyncio.to_thread(sb.auth.get_user, token)
         return str(res.user.id), res.user.email
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Token validation failed: {e}")
         return None

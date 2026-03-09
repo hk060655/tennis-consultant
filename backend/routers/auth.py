@@ -23,12 +23,20 @@ async def register(req: RegisterRequest):
     if not res.user:
         raise HTTPException(status_code=400, detail="Registration failed")
     user_id = str(res.user.id)
-    sb.table("user_profiles").insert({
-        "id": user_id,
-        "email": req.email,
-        "coach_notes": "",
-    }).execute()
+    try:
+        sb.table("user_profiles").insert({
+            "id": user_id,
+            "email": req.email,
+            "coach_notes": "",
+        }).execute()
+    except Exception as e:
+        logger.error(f"Failed to create profile for user {user_id}: {e}")
     token = res.session.access_token if res.session else ""
+    if not token:
+        raise HTTPException(
+            status_code=202,
+            detail="Registration successful. Please check your email to confirm your account before logging in."
+        )
     return AuthResponse(access_token=token, user_id=user_id, email=req.email)
 
 @router.post("/login", response_model=AuthResponse)

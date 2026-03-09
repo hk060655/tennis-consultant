@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -54,9 +55,9 @@ app.include_router(auth_router)
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)):
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks, authorization: Optional[str] = Header(None)):
     # Resolve user identity
-    auth_user = get_user_from_token(authorization)
+    auth_user = await get_user_from_token(authorization)
     is_authenticated = auth_user is not None
 
     if is_authenticated:
@@ -68,8 +69,8 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
 
     # For authenticated users: load profile + persistent history
     coach_notes = ""
+    sb = get_supabase() if is_authenticated else None
     if is_authenticated:
-        sb = get_supabase()
         if sb:
             profile_res = sb.table("user_profiles").select("coach_notes, ntrp_level").eq("id", user_id).single().execute()
             if profile_res.data:
@@ -123,7 +124,6 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
     ]
 
     if is_authenticated:
-        sb = get_supabase()
         if sb:
             sb.table("conversation_history").insert([
                 {"user_id": user_id, "role": m["role"], "content": m["content"]}
@@ -131,9 +131,8 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
             ]).execute()
             if request.user_level:
                 sb.table("user_profiles").update({"ntrp_level": level_str}).eq("id", user_id).execute()
-            import asyncio
             all_history = history + new_messages
-            asyncio.create_task(update_coach_notes(user_id, all_history, coach_notes))
+            background_tasks.add_task(update_coach_notes, user_id, all_history, coach_notes)
     else:
         history.extend(new_messages)
         conversation_store[user_id] = history[-40:]
