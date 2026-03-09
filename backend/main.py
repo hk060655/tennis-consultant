@@ -19,6 +19,7 @@ from backend.models.schemas import (
 from backend.rag.embedder import embedder
 from backend.rag.generator import generator
 from backend.rag.retriever import retriever
+from backend.routers.auth import router as auth_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,6 +45,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router)
 
 
 @app.post("/chat", response_model=ChatResponse)

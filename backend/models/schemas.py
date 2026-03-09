@@ -43,3 +43,24 @@ class HealthResponse(BaseModel):
     status: str
     chroma_ready: bool
     chunks_in_db: int
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str = Field(..., min_length=6)
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class AuthResponse(BaseModel):
+    access_token: str
+    user_id: str
+    email: str
+    ntrp_level: Optional[str] = None
+
+class UserProfile(BaseModel):
+    user_id: str
+    email: str
+    ntrp_level: Optional[str] = None
+    coach_notes: str = ""
