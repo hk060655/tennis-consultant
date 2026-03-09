@@ -838,15 +838,20 @@ body {
     border-color: var(--clay-light);
   }
 
-  /* Row 2: topic pills — wrap so all are visible */
+  /* Row 2: topic pills — single scrollable row */
   .topic-nav {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding: 8px 12px 10px;
     gap: 7px;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+
+  .topic-nav::-webkit-scrollbar { display: none; }
 
   .topic-nav-title { display: none; }
 
