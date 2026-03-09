@@ -6,7 +6,7 @@ const TOPICS = [
   { key: '其他', icon: '💬', label: '其他问题' },
 ];
 
-export default function TopicSidebar({ activeTopic, onTopicSelect, userLevel, onChangeLevel }) {
+export default function TopicSidebar({ activeTopic, onTopicSelect, userLevel, onChangeLevel, currentUser, onLoginClick, onLogout }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -40,6 +40,23 @@ export default function TopicSidebar({ activeTopic, onTopicSelect, userLevel, on
         <button className="change-level-btn" onClick={onChangeLevel}>
           修改水平
         </button>
+        <div className="auth-section">
+          {currentUser ? (
+            <>
+              <div className="user-email-display">
+                <span className="user-avatar-initial">
+                  {currentUser.email[0].toUpperCase()}
+                </span>
+                <span className="user-email-text">{currentUser.email}</span>
+              </div>
+              <button className="logout-btn" onClick={onLogout}>退出登录</button>
+            </>
+          ) : (
+            <button className="login-sidebar-btn" onClick={onLoginClick}>
+              登录 / 注册
+            </button>
+          )}
+        </div>
       </div>
     </aside>
   );

@@ -3,10 +3,21 @@ import axios from 'axios';
 import LevelSelector from './components/LevelSelector';
 import TopicSidebar from './components/TopicSidebar';
 import ChatWindow from './components/ChatWindow';
+import AuthPage from './components/AuthPage';
 import './App.css';
 
 function generateUserId() {
   return 'user_' + Math.random().toString(36).slice(2, 11);
+}
+
+function getStoredToken() {
+  return localStorage.getItem('tennis_auth_token');
+}
+
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('tennis_auth_user') || 'null');
+  } catch { return null; }
 }
 
 const TOPIC_STARTERS = {
@@ -39,9 +50,31 @@ export default function App() {
   const [showLevelSelector, setShowLevelSelector] = useState(
     !localStorage.getItem('tennis_user_level')
   );
+  const [currentUser, setCurrentUser] = useState(getStoredUser);
+  const [authToken, setAuthToken] = useState(getStoredToken);
+  const [showAuthPage, setShowAuthPage] = useState(false);
   const [messages, setMessages] = useState([makeWelcomeMessage()]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTopic, setActiveTopic] = useState(null);
+
+  const handleLogin = (token, user) => {
+    localStorage.setItem('tennis_auth_token', token);
+    localStorage.setItem('tennis_auth_user', JSON.stringify(user));
+    setAuthToken(token);
+    setCurrentUser(user);
+    setShowAuthPage(false);
+    if (user.ntrp_level) {
+      setUserLevel(user.ntrp_level);
+      localStorage.setItem('tennis_user_level', user.ntrp_level);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tennis_auth_token');
+    localStorage.removeItem('tennis_auth_user');
+    setAuthToken(null);
+    setCurrentUser(null);
+  };
 
   const handleLevelSelect = (level) => {
     setUserLevel(level);
@@ -63,7 +96,7 @@ export default function App() {
         message: messageText,
         user_id: userId,
         user_level: userLevel || undefined,
-      });
+      }, authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {});
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.reply,
@@ -82,7 +115,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, userLevel]);
+  }, [userId, userLevel, authToken]);
 
   const handleTopicSelect = (topic) => {
     setActiveTopic(topic);
@@ -95,6 +128,10 @@ export default function App() {
     setActiveTopic(null);
   }, []);
 
+  if (showAuthPage) {
+    return <AuthPage onSuccess={handleLogin} onBack={() => setShowAuthPage(false)} />;
+  }
+
   if (showLevelSelector) {
     return <LevelSelector onSelect={handleLevelSelect} />;
   }
@@ -106,6 +143,9 @@ export default function App() {
         onTopicSelect={handleTopicSelect}
         userLevel={userLevel}
         onChangeLevel={() => setShowLevelSelector(true)}
+        currentUser={currentUser}
+        onLoginClick={() => setShowAuthPage(true)}
+        onLogout={handleLogout}
       />
       <ChatWindow
         messages={messages}
