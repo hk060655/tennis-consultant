@@ -35,7 +35,7 @@ body {
   font-family: var(--font-body);
   background: var(--cream);
   color: var(--ink);
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -47,7 +47,7 @@ body {
 .app-container {
   display: grid;
   grid-template-columns: 260px 1fr;
-  height: 100vh;
+  height: 100dvh;
   max-width: 1440px;
   margin: 0 auto;
   box-shadow: var(--shadow-lg), 0 0 0 1px rgba(26,20,16,0.04);
@@ -591,7 +591,7 @@ body {
    LEVEL SELECTOR
    ════════════════════════════════════════════ */
 .level-selector-overlay {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -754,23 +754,32 @@ body {
 
 .skip-btn:hover { color: rgba(255,255,255,0.55); }
 
+/* Mobile-level badge: hidden on desktop */
+.mobile-level-badge { display: none; }
+
+/* Desktop-only elements */
+.desktop-only { display: block; }
+
 /* ════════════════════════════════════════════
    RESPONSIVE
    ════════════════════════════════════════════ */
 @media (max-width: 768px) {
   body { overflow: auto; }
 
+  /* Use dvh to correctly account for mobile browser chrome */
   .app-container {
     grid-template-columns: 1fr;
-    grid-template-rows: 54px 1fr;
-    height: 100vh;
+    grid-template-rows: 62px 1fr;
+    height: 100dvh;
     box-shadow: none;
   }
 
+  /* ── Sidebar becomes top navigation strip ── */
   .sidebar {
     flex-direction: row;
-    align-items: center;
-    height: 54px;
+    align-items: stretch;
+    height: 62px;
+    border-bottom: 2px solid var(--clay);
   }
 
   .sidebar::before { display: none; }
@@ -779,50 +788,133 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 16px;
+    padding: 0 14px;
     border-bottom: none;
-    border-right: 1px solid rgba(255,255,255,0.07);
+    border-right: 1px solid rgba(255,255,255,0.10);
     flex-shrink: 0;
   }
 
   .sidebar-header::before { display: none; }
-  .coach-monogram { width: 32px; height: 32px; font-size: 14px; margin-bottom: 0; }
-  .coach-name { font-size: 13px; margin-bottom: 0; }
+
+  .coach-monogram {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  /* On mobile, show sidebar-header-text vertically stacked */
+  .sidebar-header-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .coach-name { font-size: 12.5px; margin-bottom: 1px; }
   .coach-subtitle { display: none; }
 
+  /* Mobile-only NTRP level badge */
+  .mobile-level-badge {
+    display: flex;
+    align-items: center;
+    margin-left: 4px;
+    padding: 3px 8px;
+    background: rgba(193,68,14,0.22);
+    border: 1px solid rgba(193,68,14,0.45);
+    border-radius: 20px;
+    color: var(--clay-light);
+    font-size: 10.5px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, border-color 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .mobile-level-badge:hover,
+  .mobile-level-badge:active {
+    background: rgba(193,68,14,0.35);
+    border-color: var(--clay-light);
+  }
+
+  /* ── Topic nav: horizontal scrollable pill row ── */
   .topic-nav {
     display: flex;
     flex-direction: row;
-    padding: 4px 8px;
-    gap: 2px;
+    padding: 0 10px;
+    gap: 7px;
     overflow-x: auto;
+    overflow-y: hidden;
     flex: 1;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
 
+  .topic-nav::-webkit-scrollbar { display: none; }
   .topic-nav-title { display: none; }
 
   .topic-btn {
-    flex-direction: column;
-    gap: 2px;
-    padding: 6px 10px;
-    font-size: 11px;
-    border-radius: 8px;
+    flex-direction: row;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 22px;
     white-space: nowrap;
     min-width: fit-content;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.75);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    min-height: 36px;
+  }
+
+  .topic-btn:hover,
+  .topic-btn:active {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  .topic-btn.active {
+    background: var(--clay);
+    color: #fff;
+    border-color: var(--clay);
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(193,68,14,0.40);
   }
 
   .topic-btn::before { display: none; }
-  .topic-icon { font-size: 14px; }
+  .topic-icon { font-size: 15px; }
   .sidebar-footer { display: none; }
 
-  .chat-window { height: calc(100vh - 54px); }
-  .bubble-wrapper { max-width: 86%; }
-  .message-list { padding: 20px 16px; }
-  .chat-header { padding: 10px 16px; }
-  .chat-input-form { padding: 12px 16px 16px; }
-  .new-chat-btn span { display: none; }
-  .new-chat-btn { padding: 5px 8px; }
+  /* ── Chat window ── */
+  .chat-window { height: calc(100dvh - 62px); }
+  .bubble-wrapper { max-width: 88%; }
+  .message-list { padding: 16px 14px; gap: 14px; }
 
+  .chat-header { padding: 10px 14px; }
+  .chat-header-title { font-size: 13.5px; }
+
+  /* Hide desktop-only hint on mobile */
+  .desktop-only { display: none; }
+
+  /* ── Input form: safe area for iPhone home bar ── */
+  .chat-input-form {
+    padding: 10px 14px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .new-chat-btn span { display: none; }
+  .new-chat-btn { padding: 6px 8px; }
+
+  /* ── Level selector ── */
   .level-grid { grid-template-columns: repeat(2, 1fr); }
   .level-selector-card h1 { font-size: 30px; }
+  .level-selector-overlay {
+    padding-top: calc(32px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+    min-height: 100dvh;
+  }
 }

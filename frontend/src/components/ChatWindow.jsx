@@ -63,7 +63,7 @@ export default function ChatWindow({ messages, isLoading, onSendMessage, onNewCo
             <NewChatIcon />
             <span>新对话</span>
           </button>
-          <span className="chat-header-hint">Enter 发送 · Shift+Enter 换行</span>
+          <span className="chat-header-hint desktop-only">Enter 发送 · Shift+Enter 换行</span>
         </div>
       </div>
       <div className="message-list">

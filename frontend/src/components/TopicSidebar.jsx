@@ -11,8 +11,14 @@ export default function TopicSidebar({ activeTopic, onTopicSelect, userLevel, on
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="coach-monogram">教</div>
-        <div className="coach-name">AI 网球教练</div>
-        <div className="coach-subtitle">20年执教经验</div>
+        <div className="sidebar-header-text">
+          <div className="coach-name">AI 网球教练</div>
+          <div className="coach-subtitle">20年执教经验</div>
+        </div>
+        {/* Mobile-only level badge */}
+        <button className="mobile-level-badge" onClick={onChangeLevel}>
+          <span>{userLevel ? `NTRP ${userLevel}` : '设置水平'}</span>
+        </button>
       </div>
       <nav className="topic-nav">
         <div className="topic-nav-title">话题分类</div>
