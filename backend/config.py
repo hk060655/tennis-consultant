@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     chroma_db_path: Path = Path("chroma_db")
     chroma_collection_name: str = "tennis_knowledge"
     embedding_model: str = "text-embedding-3-small"
-    llm_model: str = "deepseek"
+    llm_model: str = "grok-4-fast"
     top_k: int = 5
     similarity_threshold: float = 0.70
     max_conversation_turns: int = 5
