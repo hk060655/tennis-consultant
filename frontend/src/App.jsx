@@ -17,11 +17,12 @@ const TOPIC_STARTERS = {
   '其他': '我有一个关于网球的问题想请教你。',
 };
 
-const WELCOME_MESSAGE = {
+const makeWelcomeMessage = () => ({
   role: 'assistant',
   content: '你好！我是你的 AI 网球教练，拥有 20 年执教经验。\n\n你可以问我任何关于**网球技术**、**战术策略**、**训练计划**或**装备选择**的问题。左侧选择话题分类可以快速开始，或者直接输入你的问题！\n\n你目前遇到什么网球难题？',
   isUncertain: false,
-};
+  timestamp: Date.now(),
+});
 
 export default function App() {
   const [userId] = useState(() => {
@@ -38,7 +39,7 @@ export default function App() {
   const [showLevelSelector, setShowLevelSelector] = useState(
     !localStorage.getItem('tennis_user_level')
   );
-  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState([makeWelcomeMessage()]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTopic, setActiveTopic] = useState(null);
 
@@ -53,7 +54,7 @@ export default function App() {
   };
 
   const sendMessage = useCallback(async (messageText) => {
-    const userMsg = { role: 'user', content: messageText };
+    const userMsg = { role: 'user', content: messageText, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
@@ -68,6 +69,7 @@ export default function App() {
         content: data.reply,
         isUncertain: data.is_uncertain,
         sources: data.sources,
+        timestamp: Date.now(),
       }]);
     } catch (err) {
       setMessages(prev => [...prev, {
@@ -75,6 +77,7 @@ export default function App() {
         content: '抱歉，我现在遇到了一些技术问题，请稍后再试。',
         isUncertain: false,
         isError: true,
+        timestamp: Date.now(),
       }]);
     } finally {
       setIsLoading(false);
@@ -86,6 +89,11 @@ export default function App() {
     const starter = TOPIC_STARTERS[topic];
     if (starter) sendMessage(starter);
   };
+
+  const handleNewConversation = useCallback(() => {
+    setMessages([makeWelcomeMessage()]);
+    setActiveTopic(null);
+  }, []);
 
   if (showLevelSelector) {
     return <LevelSelector onSelect={handleLevelSelect} />;
@@ -103,6 +111,7 @@ export default function App() {
         messages={messages}
         isLoading={isLoading}
         onSendMessage={sendMessage}
+        onNewConversation={handleNewConversation}
       />
     </div>
   );
