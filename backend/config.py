@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -14,6 +15,8 @@ class Settings(BaseSettings):
     similarity_threshold: float = 0.70
     max_conversation_turns: int = 5
     cors_origins: list[str] = ["http://localhost:3000"]
+    supabase_url: Optional[str] = None
+    supabase_service_key: Optional[str] = None
 
     class Config:
         env_file = ".env"
